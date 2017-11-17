@@ -1,0 +1,5 @@
+{
+    "testnode": "http://47.52.173.179:20332",
+    "testnodeext": "http://localhost:20332/extend",
+    "mainnode": "http://47.52.173.179:10332"
+}
