@@ -31,6 +31,15 @@ type Server struct {
 	blockfee *blockFeeModel
 }
 
+type loggerHandler struct {
+	handler http.Handler
+}
+
+func (l *loggerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	logger.DebugF("http route: %s %s", r.Method, r.URL)
+	l.handler.ServeHTTP(w, r)
+}
+
 // NewServer create new server
 func NewServer(cnf *config.Config) (*Server, error) {
 
@@ -143,22 +152,26 @@ func makeJSONRPCResponse(w http.ResponseWriter, id uint, data interface{}) {
 
 // Run insight server
 func (server *Server) Run() {
-	server.router.POST(server.cnf.GetString("insight.proxy", "/"), server.ReverseProxy)
 
 	server.router.POST(server.cnf.GetString("insight.extend", "/extend"), server.DipsatchJSONRPC)
+
+	server.router.POST(server.cnf.GetString("insight.proxy", "/"), server.ReverseProxy)
 
 	server.dispatch["balance"] = server.getBalance
 	server.dispatch["claim"] = server.getClaim
 
-	logger.Fatal(http.ListenAndServe(server.cnf.GetString("insight.listen", ":10332"), server.router))
+	logger.Fatal(http.ListenAndServe(
+		server.cnf.GetString("insight.listen", ":10332"),
+		&loggerHandler{
+			handler: server.router,
+		},
+	))
 }
 
 // ReverseProxy reverse proxy handler
 func (server *Server) ReverseProxy(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(server.remote)
-
-	logger.DebugF("reverse proxy :%s", r.RemoteAddr)
 
 	reverseProxy.ServeHTTP(w, r)
 }
