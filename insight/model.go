@@ -104,11 +104,11 @@ func newBlockFeeModel(cnf *config.Config, db *sql.DB) *blockFeeModel {
 }
 
 func (model *blockFeeModel) GetBlockFee(id int64) (*neogo.BlockFee, error) {
-	return model.getBlockFee(`select * from neo_block where id=$1`, id)
+	return model.getBlockFee(`select id,sysfree,netfee,"createTime" from neo_block where id=$1`, id)
 }
 
 func (model *blockFeeModel) GetBestBlockFee() (*neogo.BlockFee, error) {
-	return model.getBlockFee(`select * from neo_block order by id desc limit 1`)
+	return model.getBlockFee(`select id,sysfree,netfee,"createTime" from neo_block order by id desc limit 1`)
 }
 
 func (model *blockFeeModel) getBlockFee(query string, args ...interface{}) (*neogo.BlockFee, error) {
