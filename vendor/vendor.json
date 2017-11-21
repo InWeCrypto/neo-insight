@@ -19,8 +19,8 @@
 			"checksumSHA1": "beg34ongzRj4DtH/tHGO3IjgenA=",
 			"origin": "github.com/inwecrypto/neogo/vendor/github.com/dynamicgo/slf4go",
 			"path": "github.com/dynamicgo/slf4go",
-			"revision": "a6ad840037014951de8d1823ca343d3db5ef61aa",
-			"revisionTime": "2017-11-16T08:50:18Z"
+			"revision": "38d91439faf2b82f68b9ce6b913b08d8174fedbf",
+			"revisionTime": "2017-11-17T04:25:21Z"
 		},
 		{
 			"checksumSHA1": "/dtdwt1sRwJY3iQYu2hnR+zRzDI=",
@@ -32,14 +32,14 @@
 			"checksumSHA1": "RROIAUNEsm4vOuHEDwi76eK/TJ4=",
 			"origin": "github.com/inwecrypto/neogo/vendor/github.com/inwecrypto/jsonrpc",
 			"path": "github.com/inwecrypto/jsonrpc",
-			"revision": "a6ad840037014951de8d1823ca343d3db5ef61aa",
-			"revisionTime": "2017-11-16T08:50:18Z"
+			"revision": "38d91439faf2b82f68b9ce6b913b08d8174fedbf",
+			"revisionTime": "2017-11-17T04:25:21Z"
 		},
 		{
-			"checksumSHA1": "ODOi6vSxLuqsLx+Gtw5k4lNjetU=",
+			"checksumSHA1": "PJOsrfX/ysDN0D4qnmnWzaT7vXc=",
 			"path": "github.com/inwecrypto/neogo",
-			"revision": "a6ad840037014951de8d1823ca343d3db5ef61aa",
-			"revisionTime": "2017-11-16T08:50:18Z"
+			"revision": "38d91439faf2b82f68b9ce6b913b08d8174fedbf",
+			"revisionTime": "2017-11-17T04:25:21Z"
 		},
 		{
 			"checksumSHA1": "rylbYOEA1HI2BfUOOz0QRmCf5ks=",
@@ -54,7 +54,7 @@
 			"revisionTime": "2017-10-22T19:20:43Z"
 		},
 		{
-			"checksumSHA1": "AU3fA8Sm33Vj9PBoRPSeYfxLRuE=",
+			"checksumSHA1": "ATnwV0POluBNQEMjPdylodz0oK0=",
 			"path": "github.com/lib/pq/oid",
 			"revision": "b609790bd85edf8e9ab7e0f8912750a786177bcf",
 			"revisionTime": "2017-10-22T19:20:43Z"

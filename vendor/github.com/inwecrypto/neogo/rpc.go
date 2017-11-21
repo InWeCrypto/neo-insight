@@ -2,6 +2,7 @@ package neogo
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"reflect"
 
@@ -125,7 +126,7 @@ func (client *Client) GetPeers() (data interface{}, err error) {
 
 // SendRawTransaction send raw transaction with jsonrpc api:http://docs.neo.org/zh-cn/node/api/sendrawtransaction.html
 func (client *Client) SendRawTransaction(data []byte) (status bool, err error) {
-	err = client.call("sendrawtransaction", &status, data)
+	err = client.call("sendrawtransaction", &status, hex.EncodeToString(data))
 
 	return
 }
@@ -133,6 +134,13 @@ func (client *Client) SendRawTransaction(data []byte) (status bool, err error) {
 // GetBalance extend rpc method get address's utxos
 func (client *Client) GetBalance(address string, asset string) (utxos []*UTXO, err error) {
 	err = client.call("balance", &utxos, address, asset)
+
+	return
+}
+
+// GetClaim get unclaimed utxos
+func (client *Client) GetClaim(address string) (unclaimed *Unclaimed, err error) {
+	err = client.call("claim", &unclaimed, address)
 
 	return
 }

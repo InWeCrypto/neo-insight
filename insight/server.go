@@ -266,8 +266,8 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 	}
 
 	unclaimed := &neogo.Unclaimed{
-		Available:   available,
-		Unavailable: unavailable,
+		Available:   fmt.Sprintf("%.8f", available),
+		Unavailable: fmt.Sprintf("%.8f", unavailable),
 		Claims:      claims,
 	}
 
