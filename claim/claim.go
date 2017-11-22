@@ -53,12 +53,17 @@ type GetBlockFee func(id int64) (*neogo.BlockFee, error)
 
 func getUnClaimedGas(
 	unclaimed *neogo.UTXO,
-	bestBlockFee,
-	currentBlockFee *neogo.BlockFee) float64 {
+	bestBlock int64) float64 {
 
 	generated := float64(0)
 
-	for i := unclaimed.Block; i < bestBlockFee.ID; i++ {
+	endBlock := unclaimed.SpentBlock
+
+	if endBlock == -1 {
+		endBlock = bestBlock
+	}
+
+	for i := unclaimed.Block; i < endBlock; i++ {
 		tmp := generateGas(i + 1)
 
 		if tmp == 0 {
@@ -68,7 +73,7 @@ func getUnClaimedGas(
 		generated += tmp
 	}
 
-	return bestBlockFee.SysFee - currentBlockFee.SysFee + generated
+	return generated
 }
 
 // GetUnClaimedGas .
@@ -84,11 +89,13 @@ func GetUnClaimedGas(
 		if utxo.SpentBlock != -1 {
 			spentBlock := utxo.SpentBlock
 
-			if spentBlock != 0 {
-				spentBlock--
-			}
-
 			endBlockFee, err = getBlockFee(spentBlock)
+
+			if err != nil {
+				return 0, 0, err
+			}
+		} else {
+			endBlockFee, err = getBlockFee(endBlockFee.ID - 1)
 
 			if err != nil {
 				return 0, 0, err
@@ -107,7 +114,7 @@ func GetUnClaimedGas(
 			return 0, 0, err
 		}
 
-		gas := getUnClaimedGas(utxo, endBlockFee, currentBlockFee)
+		gas := endBlockFee.SysFee - currentBlockFee.SysFee + getUnClaimedGas(utxo, bestBlockFee.ID)
 
 		val, err := utxo.Value()
 
