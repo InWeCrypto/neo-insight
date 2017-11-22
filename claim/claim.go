@@ -68,7 +68,7 @@ func getUnClaimedGas(
 		generated += tmp
 	}
 
-	return currentBlockFee.SysFee - bestBlockFee.SysFee + generated
+	return bestBlockFee.SysFee - currentBlockFee.SysFee + generated
 }
 
 // GetUnClaimedGas .
