@@ -82,7 +82,13 @@ func GetUnClaimedGas(
 		endBlockFee := bestBlockFee
 
 		if utxo.SpentBlock != -1 {
-			endBlockFee, err = getBlockFee(utxo.SpentBlock)
+			spentBlock := utxo.SpentBlock
+
+			if spentBlock != 0 {
+				spentBlock--
+			}
+
+			endBlockFee, err = getBlockFee(spentBlock)
 
 			if err != nil {
 				return 0, 0, err
