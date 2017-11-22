@@ -89,7 +89,13 @@ func GetUnClaimedGas(
 			}
 		}
 
-		currentBlockFee, err := getBlockFee(utxo.Block)
+		block := utxo.Block
+
+		if utxo.Block != 0 {
+			block--
+		}
+
+		currentBlockFee, err := getBlockFee(block)
 
 		if err != nil {
 			return 0, 0, err
