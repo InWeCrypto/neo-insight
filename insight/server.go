@@ -245,13 +245,7 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 		return nil, errorf(JSONRPCInnerError, "get %s get unclaimed utxo err:\n\t%s", address, err)
 	}
 
-	bestBlockFee, err := server.blockfee.GetBestBlockFee()
-
-	if err != nil {
-		return nil, errorf(JSONRPCInnerError, "get %s get best block fee err:\n\t%s", address, err)
-	}
-
-	unavailable, available, err := claim.GetUnClaimedGas(utxos, bestBlockFee, server.blockfee.GetBlockFee)
+	unavailable, available, err := claim.GetUnClaimedGas(utxos, server.blockfee.GetBlocksFee)
 
 	if err != nil {
 		return nil, errorf(JSONRPCInnerError, "get %s get unclaimed gas fee err:\n\t%s", address, err)

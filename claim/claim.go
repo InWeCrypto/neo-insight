@@ -48,22 +48,14 @@ func GetStartBlock(unclaimed []*neogo.UTXO) int64 {
 	return unclaimed[0].Block
 }
 
-// GetBlockFee .
-type GetBlockFee func(id int64) (*neogo.BlockFee, error)
+// GetBlocksFee .
+type GetBlocksFee func(start, end int64) ([]*neogo.BlockFee, error)
 
-func getUnClaimedGas(
-	unclaimed *neogo.UTXO,
-	bestBlock int64) float64 {
+func getUnClaimedGas(start, end int64) float64 {
 
 	generated := float64(0)
 
-	endBlock := unclaimed.SpentBlock
-
-	if endBlock == -1 {
-		endBlock = bestBlock
-	}
-
-	for i := unclaimed.Block; i < endBlock; i++ {
+	for i := start; i < end; i++ {
 		tmp := generateGas(i + 1)
 
 		if tmp == 0 {
@@ -76,45 +68,48 @@ func getUnClaimedGas(
 	return generated
 }
 
+type blockFeeSorter []*neogo.BlockFee
+
+func (s blockFeeSorter) Len() int {
+	return len(s)
+}
+func (s blockFeeSorter) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s blockFeeSorter) Less(i, j int) bool {
+	return s[i].ID < s[j].ID
+}
+
 // GetUnClaimedGas .
 func GetUnClaimedGas(
 	unclaimed []*neogo.UTXO,
-	bestBlockFee *neogo.BlockFee,
-	getBlockFee GetBlockFee) (unavailable, available float64, err error) {
+	getBlocksFee GetBlocksFee) (unavailable, available float64, err error) {
 
 	for _, utxo := range unclaimed {
 
-		endBlockFee := bestBlockFee
+		blocksFee, err := getBlocksFee(utxo.Block, utxo.SpentBlock)
 
-		if utxo.SpentBlock != -1 {
-			spentBlock := utxo.SpentBlock
-
-			endBlockFee, err = getBlockFee(spentBlock)
-
-			if err != nil {
-				return 0, 0, err
-			}
-		} else {
-			endBlockFee, err = getBlockFee(endBlockFee.ID - 1)
-
-			if err != nil {
-				return 0, 0, err
-			}
+		if len(blocksFee) == 0 {
+			continue
 		}
 
-		block := utxo.Block
+		sysfee := float64(0)
 
-		if utxo.Block != 0 {
-			block--
+		for _, block := range blocksFee {
+			sysfee += block.SysFee
 		}
 
-		currentBlockFee, err := getBlockFee(block)
+		start := utxo.Block
 
-		if err != nil {
-			return 0, 0, err
+		end := utxo.SpentBlock
+
+		if utxo.SpentBlock == -1 {
+			sort.Sort(blockFeeSorter(blocksFee))
+
+			end = blocksFee[len(blocksFee)-1].ID
 		}
 
-		gas := endBlockFee.SysFee - currentBlockFee.SysFee + getUnClaimedGas(utxo, bestBlockFee.ID)
+		gas := sysfee + getUnClaimedGas(start, end)
 
 		val, err := utxo.Value()
 
