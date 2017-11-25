@@ -9,7 +9,7 @@ import (
 	"net/url"
 
 	"github.com/dynamicgo/config"
-	"github.com/goany/slf4go"
+	"github.com/dynamicgo/slf4go"
 	"github.com/inwecrypto/neo-insight/claim"
 	"github.com/inwecrypto/neogo"
 	"github.com/julienschmidt/httprouter"
