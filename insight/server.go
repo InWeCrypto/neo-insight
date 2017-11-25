@@ -16,7 +16,12 @@ import (
 	"github.com/ybbus/jsonrpc"
 )
 
-var logger = slf4go.Get("neo-insight")
+var logger slf4go.Logger
+
+// OpenLogger .
+func OpenLogger() {
+	logger = slf4go.Get("neo-insight")
+}
 
 type handler func(params []interface{}) (interface{}, *JSONRPCError)
 

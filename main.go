@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 
+	"github.com/dynamicgo/aliyunlog"
 	"github.com/dynamicgo/config"
-	"github.com/goany/slf4go"
+	"github.com/dynamicgo/slf4go"
 	"github.com/inwecrypto/neo-insight/insight"
 	_ "github.com/lib/pq"
 )
@@ -22,6 +23,17 @@ func main() {
 		logger.ErrorF("load neo config err , %s", err)
 		return
 	}
+
+	factory, err := aliyunlog.NewAliyunBackend(neocnf)
+
+	if err != nil {
+		logger.ErrorF("create aliyun log backend err , %s", err)
+		return
+	}
+
+	slf4go.Backend(factory)
+
+	insight.OpenLogger()
 
 	server, err := insight.NewServer(neocnf)
 

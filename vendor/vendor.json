@@ -10,6 +10,27 @@
 			"revisionTime": "2017-11-10T12:27:16Z"
 		},
 		{
+			"checksumSHA1": "fJl61EA6M1x8NG1lRgNyxegdQls=",
+			"origin": "github.com/dynamicgo/aliyunlog/vendor/github.com/aliyun/go-loghub",
+			"path": "github.com/aliyun/go-loghub",
+			"revision": "52c03acb69e0d9eb5d6d8f6233259b6f202e2317",
+			"revisionTime": "2017-11-24T16:40:48Z"
+		},
+		{
+			"checksumSHA1": "8dMf/LWTKUevSFeTpcs/Bq6ePcs=",
+			"origin": "github.com/dynamicgo/aliyunlog/vendor/github.com/cloudflare/golz4",
+			"path": "github.com/cloudflare/golz4",
+			"revision": "52c03acb69e0d9eb5d6d8f6233259b6f202e2317",
+			"revisionTime": "2017-11-24T16:40:48Z",
+			"tree": true
+		},
+		{
+			"checksumSHA1": "gdKDoAjJ6qJ0Xc4SplV293yV5X8=",
+			"path": "github.com/dynamicgo/aliyunlog",
+			"revision": "52c03acb69e0d9eb5d6d8f6233259b6f202e2317",
+			"revisionTime": "2017-11-24T16:40:48Z"
+		},
+		{
 			"checksumSHA1": "E+FzCdR1luyoxc9XZ++leVgVbS8=",
 			"path": "github.com/dynamicgo/config",
 			"revision": "b6d57c11b1ac88702e1f06eaf73f3601567ae899",
@@ -27,6 +48,20 @@
 			"path": "github.com/goany/slf4go",
 			"revision": "73ea855627583a86e254d3fbec479b4a69fc5bc5",
 			"revisionTime": "2017-10-12T06:43:31Z"
+		},
+		{
+			"checksumSHA1": "wn2shNJMwRZpvuvkf1s7h0wvqHI=",
+			"origin": "github.com/dynamicgo/aliyunlog/vendor/github.com/gogo/protobuf/proto",
+			"path": "github.com/gogo/protobuf/proto",
+			"revision": "52c03acb69e0d9eb5d6d8f6233259b6f202e2317",
+			"revisionTime": "2017-11-24T16:40:48Z"
+		},
+		{
+			"checksumSHA1": "HmbftipkadrLlCfzzVQ+iFHbl6g=",
+			"origin": "github.com/dynamicgo/aliyunlog/vendor/github.com/golang/glog",
+			"path": "github.com/golang/glog",
+			"revision": "52c03acb69e0d9eb5d6d8f6233259b6f202e2317",
+			"revisionTime": "2017-11-24T16:40:48Z"
 		},
 		{
 			"checksumSHA1": "RROIAUNEsm4vOuHEDwi76eK/TJ4=",

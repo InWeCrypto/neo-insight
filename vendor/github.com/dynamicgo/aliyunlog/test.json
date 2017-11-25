@@ -1,0 +1,14 @@
+{
+    "slf4go": {
+        "aliyun": {
+            "project": "inwecrypto",
+            "endpoint": "cn-hongkong.log.aliyuncs.com",
+            "accesskey": {
+                "id": "LTAI48mIXgxl142U",
+                "secret": "biu2hvcsl5KSfFw2ffbLYO1HJxvyOm"
+            },
+            "logstore": "inwecrypto",
+            "source": "xxxxxx"
+        }
+    }
+}
