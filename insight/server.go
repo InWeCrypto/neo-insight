@@ -234,6 +234,8 @@ func (server *Server) getBalance(params []interface{}) (interface{}, *JSONRPCErr
 }
 
 func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError) {
+	logger.Debug("start get claim :%v", params)
+
 	if len(params) < 1 {
 		return nil, errorf(JSONRPCInvalidParams, "expect address parameters")
 	}
@@ -269,6 +271,8 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 		Unavailable: fmt.Sprintf("%.8f", unavailable),
 		Claims:      claims,
 	}
+
+	logger.Debug("finish get claim :%v", params)
 
 	return unclaimed, nil
 }
