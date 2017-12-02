@@ -8,9 +8,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
+	"time"
 
 	"github.com/dynamicgo/config"
 	"github.com/dynamicgo/slf4go"
+	"github.com/go-redis/redis"
 	"github.com/inwecrypto/neo-insight/claim"
 	"github.com/inwecrypto/neogo"
 	"github.com/julienschmidt/httprouter"
@@ -28,13 +31,17 @@ type handler func(params []interface{}) (interface{}, *JSONRPCError)
 
 // Server insight api jsonrpc 2.0 server
 type Server struct {
-	cnf      *config.Config
-	router   *httprouter.Router
-	remote   *url.URL
-	dispatch map[string]handler
-	db       *sql.DB
-	utxo     *utxoModel
-	blockfee *blockFeeModel
+	mutex        sync.Mutex
+	cnf          *config.Config
+	router       *httprouter.Router
+	remote       *url.URL
+	dispatch     map[string]handler
+	db           *sql.DB
+	utxo         *utxoModel
+	blockfee     *blockFeeModel
+	redisclient  *redis.Client
+	syncaddress  map[string]string
+	syncDuration time.Duration
 }
 
 type loggerHandler struct {
@@ -61,15 +68,26 @@ func NewServer(cnf *config.Config) (*Server, error) {
 		return nil, err
 	}
 
-	return &Server{
-		cnf:      cnf,
-		router:   httprouter.New(),
-		remote:   remote,
-		dispatch: make(map[string]handler),
-		db:       db,
-		utxo:     newUTXOModel(cnf, db),
-		blockfee: newBlockFeeModel(cnf, db),
-	}, nil
+	client := redis.NewClient(&redis.Options{
+		Addr:     cnf.GetString("insight.redis.address", "localhost:6379"),
+		Password: cnf.GetString("insight.redis.password", "xxxxxx"), // no password set
+		DB:       int(cnf.GetInt64("insight.redis.db", 1)),          // use default DB
+	})
+
+	server := &Server{
+		cnf:          cnf,
+		router:       httprouter.New(),
+		remote:       remote,
+		dispatch:     make(map[string]handler),
+		db:           db,
+		utxo:         newUTXOModel(cnf, db),
+		blockfee:     newBlockFeeModel(cnf, db),
+		redisclient:  client,
+		syncaddress:  make(map[string]string),
+		syncDuration: time.Second * cnf.GetDuration("insight.sync", 20),
+	}
+
+	return server, nil
 }
 
 func openDB(cnf *config.Config) (*sql.DB, error) {
@@ -166,12 +184,64 @@ func (server *Server) Run() {
 	server.dispatch["balance"] = server.getBalance
 	server.dispatch["claim"] = server.getClaim
 
+	go server.syncCached()
+
 	logger.Fatal(http.ListenAndServe(
 		server.cnf.GetString("insight.listen", ":10332"),
 		&loggerHandler{
 			handler: server.router,
 		},
 	))
+}
+
+func (server *Server) syncCached() {
+
+	ticker := time.NewTicker(server.syncDuration)
+
+	for {
+		<-ticker.C
+
+		logger.DebugF("start sync address claimed ..")
+
+		var syncQ []string
+
+		server.mutex.Lock()
+		for _, address := range server.syncaddress {
+			syncQ = append(syncQ, address)
+		}
+		server.mutex.Unlock()
+
+		for _, address := range syncQ {
+
+			logger.DebugF("sync address claimed utxos %s", address)
+
+			unclaimed, err := server.doGetClaim(address)
+
+			if err != nil {
+				logger.ErrorF("sync claim for address %s err, %s", address, err)
+				continue
+			}
+
+			data, err := json.Marshal(unclaimed)
+
+			if err != nil {
+				logger.ErrorF("sync claim for address %s err, %s", address, err)
+				continue
+			}
+
+			err = server.redisclient.Set(address, data, time.Hour*24).Err()
+
+			if err != nil {
+				logger.ErrorF("cached claim for address %s err, %s", address, err)
+				continue
+			}
+
+			logger.DebugF("sync address claimed utxos %s finished", address)
+		}
+
+		logger.DebugF("finish sync address claimed")
+	}
+
 }
 
 // ReverseProxy reverse proxy handler
@@ -235,9 +305,8 @@ func (server *Server) getBalance(params []interface{}) (interface{}, *JSONRPCErr
 }
 
 func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError) {
-
 	if len(params) < 1 {
-		return nil, errorf(JSONRPCInvalidParams, "expect address parameters")
+		return nil, errorf(JSONRPCInvalidParams, "expect address and asset parameters")
 	}
 
 	address, ok := params[0].(string)
@@ -246,18 +315,58 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 		return nil, errorf(JSONRPCInvalidParams, "address parameter must be string")
 	}
 
+	unclaimed, ok := server.getCachedClaim(address)
+
+	if !ok {
+		unclaimed = &neogo.Unclaimed{}
+	}
+
+	return unclaimed, nil
+}
+
+func (server *Server) getCachedClaim(address string) (unclaimed *neogo.Unclaimed, ok bool) {
+	val, err := server.redisclient.Get(address).Result()
+
+	if err == redis.Nil {
+		server.mutex.Lock()
+		if _, ok := server.syncaddress[address]; !ok {
+			server.syncaddress[address] = address
+		}
+		server.mutex.Unlock()
+		return nil, false
+	}
+
+	if err != nil {
+		logger.DebugF("get cached claim for address %s err , %s", address, err)
+		return nil, false
+	}
+
+	err = json.Unmarshal([]byte(val), &unclaimed)
+
+	if err != nil {
+		logger.DebugF("get cachde claim for address %s err , %s", address, err)
+		return nil, false
+	}
+
+	ok = true
+
+	return
+}
+
+func (server *Server) doGetClaim(address string) (*neogo.Unclaimed, error) {
+
 	logger.DebugF("start get claim :%s", address)
 
 	utxos, err := server.utxo.Unclaimed(address)
 
 	if err != nil {
-		return nil, errorf(JSONRPCInnerError, "get %s get unclaimed utxo err:\n\t%s", address, err)
+		return nil, fmt.Errorf("get %s get unclaimed utxo err:\n\t%s", address, err)
 	}
 
 	unavailable, available, err := claim.GetUnClaimedGas(utxos, server.blockfee.GetBlocksFee)
 
 	if err != nil {
-		return nil, errorf(JSONRPCInnerError, "get %s get unclaimed gas fee err:\n\t%s", address, err)
+		return nil, fmt.Errorf("get %s get unclaimed gas fee err:\n\t%s", address, err)
 	}
 
 	claims := make([]*neogo.UTXO, 0)
