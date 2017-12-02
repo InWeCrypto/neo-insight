@@ -1,6 +1,7 @@
 package claim
 
 import (
+	"fmt"
 	"math"
 	"sort"
 
@@ -49,7 +50,7 @@ func GetStartBlock(unclaimed []*neogo.UTXO) int64 {
 }
 
 // GetBlocksFee .
-type GetBlocksFee func(start, end int64) ([]*neogo.BlockFee, error)
+type GetBlocksFee func(start, end int64) (float64, int64, error)
 
 func getUnClaimedGas(start, end int64) float64 {
 
@@ -87,27 +88,9 @@ func GetUnClaimedGas(
 
 	for _, utxo := range unclaimed {
 
-		blocksFee, err := getBlocksFee(utxo.Block, utxo.SpentBlock)
-
-		if len(blocksFee) == 0 {
-			continue
-		}
-
-		sysfee := float64(0)
-
-		for _, block := range blocksFee {
-			sysfee += block.SysFee
-		}
+		sysfee, end, err := getBlocksFee(utxo.Block, utxo.SpentBlock)
 
 		start := utxo.Block
-
-		end := utxo.SpentBlock
-
-		if utxo.SpentBlock == -1 {
-			sort.Sort(blockFeeSorter(blocksFee))
-
-			end = blocksFee[len(blocksFee)-1].ID
-		}
 
 		gas := sysfee + getUnClaimedGas(start, end)
 
@@ -124,7 +107,14 @@ func GetUnClaimedGas(
 		} else {
 			unavailable += gas
 		}
+
+		utxo.Gas = fmt.Sprintf("%.8f", round(gas, 8))
 	}
 
 	return
+}
+
+func round(f float64, n int) float64 {
+	pow10n := math.Pow10(n)
+	return math.Trunc(f*pow10n) / pow10n
 }

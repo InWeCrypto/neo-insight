@@ -117,6 +117,7 @@ type UTXO struct {
 	Block         int64  `json:"block"`
 	SpentBlock    int64  `json:"spentBlock"`
 	value         *float64
+	Gas           string `json:"gas"`
 }
 
 // Value get utxo value

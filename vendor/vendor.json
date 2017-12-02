@@ -6,8 +6,8 @@
 			"checksumSHA1": "8G3MdcWpgaVSwl1Yh/n6yJo3w5o=",
 			"origin": "github.com/dynamicgo/config/vendor/github.com/Jeffail/gabs",
 			"path": "github.com/Jeffail/gabs",
-			"revision": "b6d57c11b1ac88702e1f06eaf73f3601567ae899",
-			"revisionTime": "2017-11-10T12:27:16Z"
+			"revision": "aa9e325b771ca815461890c5e5b9be4e42da1633",
+			"revisionTime": "2017-11-26T15:05:34Z"
 		},
 		{
 			"checksumSHA1": "fJl61EA6M1x8NG1lRgNyxegdQls=",
@@ -31,17 +31,17 @@
 			"revisionTime": "2017-11-24T16:40:48Z"
 		},
 		{
-			"checksumSHA1": "E+FzCdR1luyoxc9XZ++leVgVbS8=",
+			"checksumSHA1": "FbcM2THHHwG+T4WbruyMPUdB1X8=",
 			"path": "github.com/dynamicgo/config",
-			"revision": "b6d57c11b1ac88702e1f06eaf73f3601567ae899",
-			"revisionTime": "2017-11-10T12:27:16Z"
+			"revision": "aa9e325b771ca815461890c5e5b9be4e42da1633",
+			"revisionTime": "2017-11-26T15:05:34Z"
 		},
 		{
 			"checksumSHA1": "beg34ongzRj4DtH/tHGO3IjgenA=",
 			"origin": "github.com/inwecrypto/neogo/vendor/github.com/dynamicgo/slf4go",
 			"path": "github.com/dynamicgo/slf4go",
-			"revision": "38d91439faf2b82f68b9ce6b913b08d8174fedbf",
-			"revisionTime": "2017-11-17T04:25:21Z"
+			"revision": "1b360f43a750e6a3f254f0fd85c4daec75077196",
+			"revisionTime": "2017-11-22T02:22:35Z"
 		},
 		{
 			"checksumSHA1": "/dtdwt1sRwJY3iQYu2hnR+zRzDI=",
@@ -67,14 +67,14 @@
 			"checksumSHA1": "RROIAUNEsm4vOuHEDwi76eK/TJ4=",
 			"origin": "github.com/inwecrypto/neogo/vendor/github.com/inwecrypto/jsonrpc",
 			"path": "github.com/inwecrypto/jsonrpc",
-			"revision": "38d91439faf2b82f68b9ce6b913b08d8174fedbf",
-			"revisionTime": "2017-11-17T04:25:21Z"
+			"revision": "1b360f43a750e6a3f254f0fd85c4daec75077196",
+			"revisionTime": "2017-11-22T02:22:35Z"
 		},
 		{
-			"checksumSHA1": "PJOsrfX/ysDN0D4qnmnWzaT7vXc=",
+			"checksumSHA1": "VT7M2Ug6mHD8EmGbTWMPJtIApTU=",
 			"path": "github.com/inwecrypto/neogo",
-			"revision": "38d91439faf2b82f68b9ce6b913b08d8174fedbf",
-			"revisionTime": "2017-11-17T04:25:21Z"
+			"revision": "1b360f43a750e6a3f254f0fd85c4daec75077196",
+			"revisionTime": "2017-11-22T02:22:35Z"
 		},
 		{
 			"checksumSHA1": "rylbYOEA1HI2BfUOOz0QRmCf5ks=",
@@ -89,7 +89,7 @@
 			"revisionTime": "2017-10-22T19:20:43Z"
 		},
 		{
-			"checksumSHA1": "ATnwV0POluBNQEMjPdylodz0oK0=",
+			"checksumSHA1": "AU3fA8Sm33Vj9PBoRPSeYfxLRuE=",
 			"path": "github.com/lib/pq/oid",
 			"revision": "b609790bd85edf8e9ab7e0f8912750a786177bcf",
 			"revisionTime": "2017-10-22T19:20:43Z"

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -234,7 +235,6 @@ func (server *Server) getBalance(params []interface{}) (interface{}, *JSONRPCErr
 }
 
 func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError) {
-	logger.Debug("start get claim :%v", params)
 
 	if len(params) < 1 {
 		return nil, errorf(JSONRPCInvalidParams, "expect address parameters")
@@ -245,6 +245,8 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 	if !ok {
 		return nil, errorf(JSONRPCInvalidParams, "address parameter must be string")
 	}
+
+	logger.DebugF("start get claim :%s", address)
 
 	utxos, err := server.utxo.Unclaimed(address)
 
@@ -267,12 +269,17 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 	}
 
 	unclaimed := &neogo.Unclaimed{
-		Available:   fmt.Sprintf("%.8f", available),
-		Unavailable: fmt.Sprintf("%.8f", unavailable),
+		Available:   fmt.Sprintf("%.8f", round(available, 8)),
+		Unavailable: fmt.Sprintf("%.8f", round(unavailable, 8)),
 		Claims:      claims,
 	}
 
-	logger.Debug("finish get claim :%v", params)
+	logger.DebugF("finish get claim: %s available: %.8f unavailable: %.8f", address, round(available, 8), round(unavailable, 8))
 
 	return unclaimed, nil
+}
+
+func round(f float64, n int) float64 {
+	pow10n := math.Pow10(n)
+	return math.Trunc(f*pow10n) / pow10n
 }

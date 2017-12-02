@@ -111,46 +111,36 @@ func (model *blockFeeModel) GetBestBlockFee() (*neogo.BlockFee, error) {
 	return model.getBlockFee(`select id,sysfee,netfee,"createTime" from neo_block order by id desc limit 1`)
 }
 
-func (model *blockFeeModel) GetBlocksFee(start int64, end int64) ([]*neogo.BlockFee, error) {
+func (model *blockFeeModel) GetBlocksFee(start int64, end int64) (float64, int64, error) {
 
 	var rows *sql.Rows
 	var err error
 
 	if end != -1 {
-		rows, err = model.db.Query(`select id,sysfee,netfee,"createTime" from neo_block where id>=$1 and id <=$2`, start, end)
+		rows, err = model.db.Query(`select sum(sysfee),max(id) from neo_block where id>=$1 and id <=$2`, start, end)
 	} else {
-		rows, err = model.db.Query(`select id,sysfee,netfee,"createTime" from neo_block where id>=$1`, start)
+		rows, err = model.db.Query(`select sum(sysfee),max(id) from neo_block where id>=$1`, start)
 	}
 
 	if err != nil {
-		return nil, err
+		return 0, end, err
 	}
 
 	defer rows.Close()
 
-	var results []*neogo.BlockFee
-
-	for rows.Next() {
+	if rows.Next() {
 		var (
-			id         int64
-			sysfee     float64
-			netfee     float64
-			createTime string
+			sysfee float64
 		)
 
-		if err := rows.Scan(&id, &sysfee, &netfee, &createTime); err != nil {
-			return nil, err
+		if err := rows.Scan(&sysfee, &end); err != nil {
+			return 0, end, err
 		}
 
-		results = append(results, &neogo.BlockFee{
-			ID:         id,
-			SysFee:     sysfee,
-			NetFee:     netfee,
-			CreateTime: createTime,
-		})
+		return sysfee, end, nil
 	}
 
-	return results, nil
+	return 0, end, nil
 }
 
 func (model *blockFeeModel) getBlockFee(query string, args ...interface{}) (*neogo.BlockFee, error) {
