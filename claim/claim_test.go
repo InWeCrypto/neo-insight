@@ -1,10 +1,13 @@
 package claim
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestGenerateCas(t *testing.T) {
 	generated := float64(0)
-	for i := int64(802873); i < 805360; i++ {
+	for i := int64(855786); i < 855792; i++ {
 		tmp := generateGas(i)
 
 		generated += tmp
@@ -12,5 +15,9 @@ func TestGenerateCas(t *testing.T) {
 
 	gas := generated / totalNEO
 
-	println(gas)
+	math.Trunc(gas * math.Pow10(8))
+
+	math.Floor(4.9)
+
+	println(math.Floor(4.9))
 }
