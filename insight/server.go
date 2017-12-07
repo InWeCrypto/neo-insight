@@ -325,14 +325,15 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 }
 
 func (server *Server) getCachedClaim(address string) (unclaimed *neogo.Unclaimed, ok bool) {
+	server.mutex.Lock()
+	if _, ok := server.syncaddress[address]; !ok {
+		server.syncaddress[address] = address
+	}
+	server.mutex.Unlock()
+
 	val, err := server.redisclient.Get(address).Result()
 
 	if err == redis.Nil {
-		server.mutex.Lock()
-		if _, ok := server.syncaddress[address]; !ok {
-			server.syncaddress[address] = address
-		}
-		server.mutex.Unlock()
 		return nil, false
 	}
 
