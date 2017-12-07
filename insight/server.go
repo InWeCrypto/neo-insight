@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 
@@ -390,6 +390,11 @@ func (server *Server) doGetClaim(address string) (*neogo.Unclaimed, error) {
 }
 
 func round(f float64, n int) float64 {
-	pow10n := math.Pow10(n)
-	return math.Floor(f*pow10n) / pow10n
+	data := fmt.Sprintf("%.9f", f)
+
+	data = data[0 : len(data)-1]
+
+	r, _ := strconv.ParseFloat(data, 8)
+
+	return r
 }
