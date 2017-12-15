@@ -399,8 +399,8 @@ func (server *Server) getCachedClaim(address string) (unclaimed *neogo.Unclaimed
 
 // Asserts .
 const (
-	GasAssert = "602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7"
-	NEOAssert = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
+	GasAssert = "0x602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7"
+	NEOAssert = "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
 )
 
 func (server *Server) unclaimed(address string) ([]*neogo.UTXO, error) {
