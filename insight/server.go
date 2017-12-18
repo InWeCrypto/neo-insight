@@ -320,7 +320,7 @@ func (server *Server) unspent(address string, asset string) ([]*neogo.UTXO, erro
 
 	err := server.
 		engine.
-		Where(`address = ? and asset = ? and spent_block = -1`).
+		Where(`address = ? and asset = ? and spent_block = -1`, address, asset).
 		Find(&tutxos)
 
 	if err != nil {
