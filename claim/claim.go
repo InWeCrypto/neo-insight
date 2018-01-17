@@ -6,10 +6,10 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/inwecrypto/neogo"
+	"github.com/inwecrypto/neogo/rpc"
 )
 
-type utxoSorter []*neogo.UTXO
+type utxoSorter []*rpc.UTXO
 
 func (s utxoSorter) Len() int {
 	return len(s)
@@ -39,7 +39,7 @@ func generateGas(id int64) float64 {
 }
 
 // GetStartBlock get unclaimed utxos start block number
-func GetStartBlock(unclaimed []*neogo.UTXO) int64 {
+func GetStartBlock(unclaimed []*rpc.UTXO) int64 {
 
 	if len(unclaimed) == 0 {
 		panic("unclaimed utxo must be nonzero")
@@ -70,7 +70,7 @@ func getUnClaimedGas(start, end int64) float64 {
 	return generated
 }
 
-type blockFeeSorter []*neogo.BlockFee
+type blockFeeSorter []*rpc.BlockFee
 
 func (s blockFeeSorter) Len() int {
 	return len(s)
@@ -84,7 +84,7 @@ func (s blockFeeSorter) Less(i, j int) bool {
 
 // GetUnClaimedGas .
 func GetUnClaimedGas(
-	unclaimed []*neogo.UTXO,
+	unclaimed []*rpc.UTXO,
 	getBlocksFee GetBlocksFee) (unavailable, available float64, err error) {
 
 	for _, utxo := range unclaimed {
