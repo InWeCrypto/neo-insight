@@ -42,16 +42,17 @@ func (address *syncAddress) String() string {
 
 // Server insight api jsonrpc 2.0 server
 type Server struct {
-	mutex       sync.Mutex
-	cnf         *config.Config
-	router      *httprouter.Router
-	remote      *url.URL
-	dispatch    map[string]handler
-	engine      *xorm.Engine
-	redisclient *redis.Client
-	syncChan    chan *syncAddress
-	syncFlag    map[string]string
-	syncTimes   int
+	mutex        sync.Mutex
+	cnf          *config.Config
+	router       *httprouter.Router
+	remote       *url.URL
+	dispatch     map[string]handler
+	engine       *xorm.Engine
+	redisclient  *redis.Client
+	syncChan     chan *syncAddress
+	syncFlag     map[string]string
+	syncTimes    int
+	syncDuration time.Duration
 }
 
 type loggerHandler struct {
@@ -97,15 +98,16 @@ func NewServer(cnf *config.Config) (*Server, error) {
 	})
 
 	server := &Server{
-		cnf:         cnf,
-		router:      httprouter.New(),
-		remote:      remote,
-		dispatch:    make(map[string]handler),
-		engine:      engine,
-		redisclient: client,
-		syncChan:    make(chan *syncAddress, cnf.GetInt64("insight.sync_chan_length", 1024)),
-		syncFlag:    make(map[string]string),
-		syncTimes:   int(cnf.GetInt64("insight.sync_times", 4)),
+		cnf:          cnf,
+		router:       httprouter.New(),
+		remote:       remote,
+		dispatch:     make(map[string]handler),
+		engine:       engine,
+		redisclient:  client,
+		syncChan:     make(chan *syncAddress, cnf.GetInt64("insight.sync_chan_length", 1024)),
+		syncFlag:     make(map[string]string),
+		syncTimes:    int(cnf.GetInt64("insight.sync_times", 4)),
+		syncDuration: time.Second * cnf.GetDuration("insight.sync_duration", 4),
 	}
 
 	return server, nil
@@ -247,7 +249,9 @@ func (server *Server) syncCached() {
 		logger.DebugF("requeue sync address %s", address)
 
 		if address.Times > 0 {
-			server.syncChan <- address
+			time.AfterFunc(server.syncDuration, func() {
+				server.syncChan <- address
+			})
 		} else {
 			server.mutex.Lock()
 			delete(server.syncFlag, address.Address)
