@@ -248,10 +248,13 @@ func (server *Server) syncCached() {
 
 		if address.Times > 0 {
 			time.AfterFunc(server.syncDuration, func() {
-				server.syncChan <- address
-			})
+				logger.DebugF("requeue sync address %s", address)
 
-			logger.DebugF("requeue sync address %s", address)
+				server.syncChan <- address
+
+				logger.DebugF("requeue sync address %s -- success", address)
+
+			})
 
 		} else {
 			logger.DebugF("delete sync address %s", address)
