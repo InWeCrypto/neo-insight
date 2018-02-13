@@ -246,13 +246,16 @@ func (server *Server) syncCached() {
 
 		address.Times--
 
-		logger.DebugF("requeue sync address %s", address)
-
 		if address.Times > 0 {
 			time.AfterFunc(server.syncDuration, func() {
 				server.syncChan <- address
 			})
+
+			logger.DebugF("requeue sync address %s", address)
+
 		} else {
+			logger.DebugF("delete sync address %s", address)
+
 			server.mutex.Lock()
 			delete(server.syncFlag, address.Address)
 			server.mutex.Unlock()
@@ -357,6 +360,7 @@ func (server *Server) unspent(address string, asset string) ([]*rpc.UTXO, error)
 }
 
 func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError) {
+
 	if len(params) < 1 {
 		return nil, errorf(JSONRPCInvalidParams, "expect address and asset parameters")
 	}
@@ -378,6 +382,8 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 
 func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, ok bool) {
 
+	logger.DebugF("get claim: %s", address)
+
 	server.mutex.Lock()
 
 	flag := false
@@ -386,6 +392,8 @@ func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, 
 		server.syncFlag[address] = address
 
 		flag = true
+
+		logger.DebugF("queued claim task: %s", address)
 	}
 	server.mutex.Unlock()
 
@@ -415,6 +423,8 @@ func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, 
 	}
 
 	ok = true
+
+	logger.DebugF("get cached claim fro address %s : %s", address, val)
 
 	return
 }
