@@ -17,7 +17,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/inwecrypto/neo-insight/claim"
 	"github.com/inwecrypto/neodb"
-	"github.com/inwecrypto/neogo"
+	"github.com/inwecrypto/neogo/rpc"
 	"github.com/julienschmidt/httprouter"
 	"github.com/ybbus/jsonrpc"
 )
@@ -31,6 +31,15 @@ func OpenLogger() {
 
 type handler func(params []interface{}) (interface{}, *JSONRPCError)
 
+type syncAddress struct {
+	Address string
+	Times   int
+}
+
+func (address *syncAddress) String() string {
+	return fmt.Sprintf("%s (%d)", address.Address, address.Times)
+}
+
 // Server insight api jsonrpc 2.0 server
 type Server struct {
 	mutex        sync.Mutex
@@ -40,7 +49,9 @@ type Server struct {
 	dispatch     map[string]handler
 	engine       *xorm.Engine
 	redisclient  *redis.Client
-	syncaddress  map[string]string
+	syncChan     chan *syncAddress
+	syncFlag     map[string]string
+	syncTimes    int
 	syncDuration time.Duration
 }
 
@@ -93,8 +104,10 @@ func NewServer(cnf *config.Config) (*Server, error) {
 		dispatch:     make(map[string]handler),
 		engine:       engine,
 		redisclient:  client,
-		syncaddress:  make(map[string]string),
-		syncDuration: time.Second * cnf.GetDuration("insight.sync", 20),
+		syncChan:     make(chan *syncAddress, cnf.GetInt64("insight.sync_chan_length", 1024)),
+		syncFlag:     make(map[string]string),
+		syncTimes:    int(cnf.GetInt64("insight.sync_times", 4)),
+		syncDuration: time.Second * cnf.GetDuration("insight.sync_duration", 4),
 	}
 
 	return server, nil
@@ -206,50 +219,54 @@ func (server *Server) Run() {
 
 func (server *Server) syncCached() {
 
-	ticker := time.NewTicker(server.syncDuration)
+	for address := range server.syncChan {
 
-	for {
-		<-ticker.C
+		logger.DebugF("sync address claimed utxos %s", address)
 
-		logger.DebugF("start sync address claimed ..")
+		unclaimed, err := server.doGetClaim(address.Address)
 
-		var syncQ []string
-
-		server.mutex.Lock()
-		for _, address := range server.syncaddress {
-			syncQ = append(syncQ, address)
-		}
-		server.mutex.Unlock()
-
-		for _, address := range syncQ {
-
-			logger.DebugF("sync address claimed utxos %s", address)
-
-			unclaimed, err := server.doGetClaim(address)
-
-			if err != nil {
-				logger.ErrorF("sync claim for address %s err, %s", address, err)
-				continue
-			}
-
-			data, err := json.Marshal(unclaimed)
-
-			if err != nil {
-				logger.ErrorF("sync claim for address %s err, %s", address, err)
-				continue
-			}
-
-			err = server.redisclient.Set(address, data, time.Hour*24).Err()
-
-			if err != nil {
-				logger.ErrorF("cached claim for address %s err, %s", address, err)
-				continue
-			}
-
-			logger.DebugF("sync address claimed utxos %s finished", address)
+		if err != nil {
+			logger.ErrorF("sync claim for address %s err, %s", address, err)
+			continue
 		}
 
-		logger.DebugF("finish sync address claimed")
+		data, err := json.Marshal(unclaimed)
+
+		if err != nil {
+			logger.ErrorF("sync claim for address %s err, %s", address, err)
+			continue
+		}
+
+		err = server.redisclient.Set(address.Address, data, time.Hour*24).Err()
+
+		if err != nil {
+			logger.ErrorF("cached claim for address %s err, %s", address, err)
+			continue
+		}
+
+		logger.DebugF(" sync address claimed utxos %s -- success", address)
+
+		address.Times--
+
+		if address.Times > 0 {
+
+			requeue := address
+
+			time.AfterFunc(server.syncDuration, func() {
+				logger.DebugF("requeue sync address %s", requeue)
+
+				server.syncChan <- requeue
+
+				logger.DebugF("requeue sync address %s -- success", requeue)
+			})
+
+		} else {
+			logger.DebugF("delete sync address %s", address)
+
+			server.mutex.Lock()
+			delete(server.syncFlag, address.Address)
+			server.mutex.Unlock()
+		}
 	}
 
 }
@@ -314,7 +331,7 @@ func (server *Server) getBalance(params []interface{}) (interface{}, *JSONRPCErr
 	return utxos, nil
 }
 
-func (server *Server) unspent(address string, asset string) ([]*neogo.UTXO, error) {
+func (server *Server) unspent(address string, asset string) ([]*rpc.UTXO, error) {
 
 	tutxos := make([]*neodb.UTXO, 0)
 
@@ -327,12 +344,12 @@ func (server *Server) unspent(address string, asset string) ([]*neogo.UTXO, erro
 		return nil, err
 	}
 
-	utxos := make([]*neogo.UTXO, 0)
+	utxos := make([]*rpc.UTXO, 0)
 
 	for _, t := range tutxos {
-		utxos = append(utxos, &neogo.UTXO{
+		utxos = append(utxos, &rpc.UTXO{
 			TransactionID: t.TX,
-			Vout: neogo.Vout{
+			Vout: rpc.Vout{
 				Address: t.Address,
 				Asset:   t.Asset,
 				N:       t.N,
@@ -348,6 +365,7 @@ func (server *Server) unspent(address string, asset string) ([]*neogo.UTXO, erro
 }
 
 func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError) {
+
 	if len(params) < 1 {
 		return nil, errorf(JSONRPCInvalidParams, "expect address and asset parameters")
 	}
@@ -361,18 +379,35 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 	unclaimed, ok := server.getCachedClaim(address)
 
 	if !ok {
-		unclaimed = &neogo.Unclaimed{}
+		unclaimed = &rpc.Unclaimed{}
 	}
 
 	return unclaimed, nil
 }
 
-func (server *Server) getCachedClaim(address string) (unclaimed *neogo.Unclaimed, ok bool) {
+func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, ok bool) {
+
+	logger.DebugF("get claim: %s", address)
+
 	server.mutex.Lock()
-	if _, ok := server.syncaddress[address]; !ok {
-		server.syncaddress[address] = address
+
+	flag := false
+
+	if _, ok := server.syncFlag[address]; !ok {
+		server.syncFlag[address] = address
+
+		flag = true
+
+		logger.DebugF("queued claim task: %s", address)
 	}
 	server.mutex.Unlock()
+
+	if flag {
+		server.syncChan <- &syncAddress{
+			Address: address,
+			Times:   server.syncTimes,
+		}
+	}
 
 	val, err := server.redisclient.Get(address).Result()
 
@@ -394,6 +429,8 @@ func (server *Server) getCachedClaim(address string) (unclaimed *neogo.Unclaimed
 
 	ok = true
 
+	logger.DebugF("get cached claim fro address %s : %s", address, val)
+
 	return
 }
 
@@ -403,7 +440,7 @@ const (
 	NEOAssert = "0xc56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b"
 )
 
-func (server *Server) unclaimed(address string) ([]*neogo.UTXO, error) {
+func (server *Server) unclaimed(address string) ([]*rpc.UTXO, error) {
 	tutxos := make([]*neodb.UTXO, 0)
 
 	err := server.
@@ -415,12 +452,12 @@ func (server *Server) unclaimed(address string) ([]*neogo.UTXO, error) {
 		return nil, err
 	}
 
-	utxos := make([]*neogo.UTXO, 0)
+	utxos := make([]*rpc.UTXO, 0)
 
 	for _, t := range tutxos {
-		utxos = append(utxos, &neogo.UTXO{
+		utxos = append(utxos, &rpc.UTXO{
 			TransactionID: t.TX,
-			Vout: neogo.Vout{
+			Vout: rpc.Vout{
 				Address: t.Address,
 				Asset:   t.Asset,
 				N:       t.N,
@@ -470,7 +507,7 @@ func (server *Server) getBlocksFee(start int64, end int64) (float64, int64, erro
 	return sum, int64(max), nil
 }
 
-func (server *Server) doGetClaim(address string) (*neogo.Unclaimed, error) {
+func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 
 	logger.DebugF("start get claim :%s", address)
 
@@ -486,7 +523,7 @@ func (server *Server) doGetClaim(address string) (*neogo.Unclaimed, error) {
 		return nil, fmt.Errorf("get %s get unclaimed gas fee err:\n\t%s", address, err)
 	}
 
-	claims := make([]*neogo.UTXO, 0)
+	claims := make([]*rpc.UTXO, 0)
 
 	for _, utxo := range utxos {
 		if utxo.SpentBlock != -1 {
@@ -494,7 +531,7 @@ func (server *Server) doGetClaim(address string) (*neogo.Unclaimed, error) {
 		}
 	}
 
-	unclaimed := &neogo.Unclaimed{
+	unclaimed := &rpc.Unclaimed{
 		Available:   fmt.Sprintf("%.8f", round(available, 8)),
 		Unavailable: fmt.Sprintf("%.8f", round(unavailable, 8)),
 		Claims:      claims,
