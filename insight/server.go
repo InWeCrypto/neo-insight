@@ -244,16 +244,20 @@ func (server *Server) syncCached() {
 			continue
 		}
 
+		logger.DebugF(" sync address claimed utxos %s -- success", address)
+
 		address.Times--
 
 		if address.Times > 0 {
+
+			requeue := address
+
 			time.AfterFunc(server.syncDuration, func() {
-				logger.DebugF("requeue sync address %s", address)
+				logger.DebugF("requeue sync address %s", requeue)
 
-				server.syncChan <- address
+				server.syncChan <- requeue
 
-				logger.DebugF("requeue sync address %s -- success", address)
-
+				logger.DebugF("requeue sync address %s -- success", requeue)
 			})
 
 		} else {
@@ -263,8 +267,6 @@ func (server *Server) syncCached() {
 			delete(server.syncFlag, address.Address)
 			server.mutex.Unlock()
 		}
-
-		logger.DebugF("sync address claimed utxos %s finished", address)
 	}
 
 }
