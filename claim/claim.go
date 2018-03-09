@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/inwecrypto/neogo/rpc"
+	"github.com/inwecrypto/neogo/tx"
 )
 
 type utxoSorter []*rpc.UTXO
@@ -87,6 +88,9 @@ func GetUnClaimedGas(
 	unclaimed []*rpc.UTXO,
 	getBlocksFee GetBlocksFee) (unavailable, available float64, err error) {
 
+	unavailableFixed8 := tx.MakeFixed8(0)
+	availableFixed8 := tx.MakeFixed8(0)
+
 	for _, utxo := range unclaimed {
 
 		sysfee, end, err := getBlocksFee(utxo.Block, utxo.SpentBlock)
@@ -105,16 +109,19 @@ func GetUnClaimedGas(
 			return 0, 0, err
 		}
 
-		gas = val * gas / totalNEO
+		gasFixed8 := tx.MakeFixed8(val * gas / totalNEO)
 
 		if utxo.SpentBlock != -1 {
-			available += gas
+			availableFixed8 += gasFixed8
 		} else {
-			unavailable += gas
+			unavailableFixed8 += gasFixed8
 		}
 
-		utxo.Gas = fmt.Sprintf("%.8f", round(gas, 8))
+		utxo.Gas = gasFixed8.String()
 	}
+
+	available = availableFixed8.Float64()
+	unavailable = unavailableFixed8.Float64()
 
 	return
 }
