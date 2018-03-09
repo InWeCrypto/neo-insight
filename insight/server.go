@@ -429,7 +429,7 @@ func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, 
 
 	ok = true
 
-	logger.DebugF("get cached claim fro address %s : %s", address, val)
+	logger.DebugF("get cached claim for address %s : %s", address, val)
 
 	return
 }
@@ -537,7 +537,9 @@ func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 		Claims:      claims,
 	}
 
-	logger.DebugF("finish get claim: %s available: %.8f unavailable: %.8f", address, round(available, 8), round(unavailable, 8))
+	jsondata, _ := json.Marshal(unclaimed)
+
+	logger.DebugF("finish get claim: %s available: %.8f unavailable: %.8f\n%s", address, round(available, 8), round(unavailable, 8), jsondata)
 
 	return unclaimed, nil
 }
