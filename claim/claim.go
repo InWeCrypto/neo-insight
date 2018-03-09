@@ -59,7 +59,7 @@ func getUnClaimedGas(start, end int64) float64 {
 	generated := float64(0)
 
 	for i := start; i < end; i++ {
-		tmp := generateGas(i + 1)
+		tmp := generateGas(i)
 
 		if tmp == 0 {
 			break
