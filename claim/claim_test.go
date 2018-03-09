@@ -1,22 +1,35 @@
 package claim
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/inwecrypto/neogo/tx"
+	"github.com/stretchr/testify/require"
 )
 
-func TestGenerateCas(t *testing.T) {
-	val := float64(2)
+func getUnClaimedGas2(start, end int64) float64 {
 	generated := float64(0)
-	for i := int64(1992850); i < 2001227; i++ {
+	for i := start; i < end; i++ {
 		tmp := generateGas(i)
+
+		if tmp == 0 {
+			break
+		}
 
 		generated += tmp
 	}
 
-	gas := tx.MakeFixed8(val * (2 + generated) / totalNEO)
+	return generated
+}
 
-	fmt.Printf("%v\n", gas.String())
+func TestGenerateCas(t *testing.T) {
+	// val := float64(2)
+	generated := getUnClaimedGas2(1992850, 2001227)
+
+	generated2 := getUnClaimedGas(1992850, 2001227)
+
+	require.Equal(t, generated, generated2)
+
+	// gas := round((val * (generated + 2) / totalNEO), 8)
+
+	// fmt.Printf("%v\n", gas)
 }
