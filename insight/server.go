@@ -262,12 +262,17 @@ func (server *Server) syncCached() {
 
 		} else {
 			logger.DebugF("delete sync address %s", address)
-
-			server.mutex.Lock()
-			delete(server.syncFlag, address.Address)
-			server.mutex.Unlock()
+			server.removeAddress(address.Address)
+			logger.DebugF("delete sync address %s -- success", address)
 		}
 	}
+
+}
+
+func (server *Server) removeAddress(address string) {
+	server.mutex.Lock()
+	defer server.mutex.Unlock()
+	delete(server.syncFlag, address)
 
 }
 
@@ -385,11 +390,9 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 	return unclaimed, nil
 }
 
-func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, ok bool) {
-
-	logger.DebugF("get claim: %s", address)
-
+func (server *Server) markAddress(address string) bool {
 	server.mutex.Lock()
+	defer server.mutex.Unlock()
 
 	flag := false
 
@@ -400,7 +403,15 @@ func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, 
 
 		logger.DebugF("queued claim task: %s", address)
 	}
-	server.mutex.Unlock()
+
+	return flag
+}
+
+func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, ok bool) {
+
+	logger.DebugF("get claim: %s", address)
+
+	flag := server.markAddress(address)
 
 	if flag {
 		server.syncChan <- &syncAddress{
