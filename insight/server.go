@@ -440,7 +440,7 @@ func (server *Server) getCachedClaim(address string) (unclaimed *rpc.Unclaimed, 
 
 	ok = true
 
-	logger.DebugF("get cached claim for address %s : %s", address, val)
+	logger.DebugF("get cached claim for address %s -- success", address)
 
 	return
 }
