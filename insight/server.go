@@ -548,9 +548,9 @@ func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 		Claims:      claims,
 	}
 
-	jsondata, _ := json.Marshal(unclaimed)
+	// jsondata, _ := json.Marshal(unclaimed)
 
-	logger.DebugF("finish get claim: %s available: %.8f unavailable: %.8f\n%s", address, round(available, 8), round(unavailable, 8), jsondata)
+	logger.DebugF("finish get claim: %s available: %.8f unavailable: %.8f", address, round(available, 8), round(unavailable, 8))
 
 	return unclaimed, nil
 }
