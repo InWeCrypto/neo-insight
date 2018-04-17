@@ -106,7 +106,7 @@ func NewServer(cnf *config.Config) (*Server, error) {
 		redisclient:  client,
 		syncChan:     make(chan *syncAddress, cnf.GetInt64("insight.sync_chan_length", 1024)),
 		syncFlag:     make(map[string]string),
-		syncTimes:    int(cnf.GetInt64("insight.sync_times", 4)),
+		syncTimes:    int(cnf.GetInt64("insight.sync_times", 20)),
 		syncDuration: time.Second * cnf.GetDuration("insight.sync_duration", 4),
 	}
 
@@ -223,7 +223,11 @@ func (server *Server) syncCached() {
 
 		logger.DebugF("sync address claimed utxos %s", address)
 
+		startTime := time.Now()
+
 		unclaimed, err := server.doGetClaim(address.Address)
+
+		claimTimes := time.Now().Sub(startTime)
 
 		if err != nil {
 			logger.ErrorF("sync claim for address %s err, %s", address, err)
@@ -252,7 +256,17 @@ func (server *Server) syncCached() {
 
 			requeue := address
 
-			time.AfterFunc(server.syncDuration, func() {
+			syncDuration := server.syncDuration
+
+			if claimTimes > 20*time.Second {
+				syncDuration = time.Minute
+			}
+
+			if syncDuration > server.syncDuration {
+				syncDuration = server.syncDuration
+			}
+
+			time.AfterFunc(syncDuration, func() {
 				logger.DebugF("requeue sync address %s", requeue)
 
 				server.syncChan <- requeue
