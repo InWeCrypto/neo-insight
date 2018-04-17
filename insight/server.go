@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -226,6 +227,8 @@ func (server *Server) syncCached() {
 		startTime := time.Now()
 
 		unclaimed, err := server.doGetClaim(address.Address)
+
+		runtime.GC()
 
 		claimTimes := time.Now().Sub(startTime)
 
