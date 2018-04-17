@@ -520,23 +520,23 @@ func (server *Server) getBlocksFee(start int64, end int64) (float64, int64, erro
 
 func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 
-	logger.DebugF("start get claim :%s", address)
+	logger.DebugF("[doGetClaim]start get claim :%s", address)
 
 	utxos, err := server.unclaimed(address)
 
 	if err != nil {
-		return nil, fmt.Errorf("get %s get unclaimed utxo err:\n\t%s", address, err)
+		return nil, fmt.Errorf("[doGetClaim]get %s get unclaimed utxo err:\n\t%s", address, err)
 	}
 
-	logger.DebugF("get address %s unclaimed utxo -- success", address)
+	logger.DebugF("[doGetClaim]get address %s unclaimed utxo -- success", address)
 
 	unavailable, available, err := claim.GetUnClaimedGas(utxos, server.getBlocksFee)
 
 	if err != nil {
-		return nil, fmt.Errorf("get address %s unclaimed gas fee err:\n\t%s", address, err)
+		return nil, fmt.Errorf("[doGetClaim]get address %s unclaimed gas fee err:\n\t%s", address, err)
 	}
 
-	logger.DebugF("get address %s unclaimed gas -- success", address)
+	logger.DebugF("[doGetClaim]get address %s unclaimed gas -- success", address)
 
 	claims := make([]*rpc.UTXO, 0)
 
@@ -554,7 +554,7 @@ func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 
 	// jsondata, _ := json.Marshal(unclaimed)
 
-	logger.DebugF("finish get claim: %s available: %.8f unavailable: %.8f", address, round(available, 8), round(unavailable, 8))
+	logger.DebugF("[doGetClaim]finish get claim: %s available: %.8f unavailable: %.8f", address, round(available, 8), round(unavailable, 8))
 
 	return unclaimed, nil
 }
