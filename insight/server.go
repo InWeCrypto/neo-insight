@@ -518,6 +518,24 @@ func (server *Server) getBlocksFee(start int64, end int64) (float64, int64, erro
 	return sum, int64(max), nil
 }
 
+func (server *Server) getBlocks(start int64, end int64) ([]*neodb.Block, error) {
+
+	blocks := make([]*neodb.Block, 0)
+
+	if end == -1 {
+		err := server.engine.Where(`block >= ?`, start).Find(&blocks)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		if err := server.engine.Where(`block >= ? and block <= ?`, start, end).Cols("block", "sys_fee").Find(&blocks); err != nil {
+			return nil, err
+		}
+	}
+
+	return blocks, nil
+}
+
 func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 
 	logger.DebugF("[doGetClaim]start get claim :%s", address)
@@ -530,13 +548,25 @@ func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 
 	logger.DebugF("[doGetClaim]get address %s unclaimed utxo -- success", address)
 
-	unavailable, available, err := claim.GetUnClaimedGas(utxos, server.getBlocksFee)
+	start, end := claim.CalcBlockRange(utxos)
+
+	logger.Debug("[doGetClaim]start get blocks", start, end)
+	blocks, err := server.getBlocks(start, end)
+	logger.Debug("[doGetClaim]end get blocks", len(blocks), blocks[len(blocks)-1].Block)
+
+	if err != nil {
+		return nil, nil
+	}
+
+	logger.DebugF("[doGetClaim] calc address %s unclaimed gas", address)
+
+	unavailable, available, err := claim.CalcUnclaimedGas(utxos, blocks)
 
 	if err != nil {
 		return nil, fmt.Errorf("[doGetClaim]get address %s unclaimed gas fee err:\n\t%s", address, err)
 	}
 
-	logger.DebugF("[doGetClaim]get address %s unclaimed gas -- success", address)
+	logger.DebugF("[doGetClaim] calc address %s unclaimed gas -- success", address)
 
 	claims := make([]*rpc.UTXO, 0)
 
