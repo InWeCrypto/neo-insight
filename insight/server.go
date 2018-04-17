@@ -528,11 +528,15 @@ func (server *Server) doGetClaim(address string) (*rpc.Unclaimed, error) {
 		return nil, fmt.Errorf("get %s get unclaimed utxo err:\n\t%s", address, err)
 	}
 
+	logger.DebugF("get address %s unclaimed utxo -- success", address)
+
 	unavailable, available, err := claim.GetUnClaimedGas(utxos, server.getBlocksFee)
 
 	if err != nil {
-		return nil, fmt.Errorf("get %s get unclaimed gas fee err:\n\t%s", address, err)
+		return nil, fmt.Errorf("get address %s unclaimed gas fee err:\n\t%s", address, err)
 	}
+
+	logger.DebugF("get address %s unclaimed gas -- success", address)
 
 	claims := make([]*rpc.UTXO, 0)
 
