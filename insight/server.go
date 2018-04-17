@@ -234,7 +234,7 @@ func (server *Server) syncCached() {
 			continue
 		}
 
-		logger.Debug("[doGetClaim] claim %s spent times %s", address.Address, claimTimes)
+		logger.DebugF("[doGetClaim] claim %s spent times %s", address.Address, claimTimes)
 
 		data, err := json.Marshal(unclaimed)
 
