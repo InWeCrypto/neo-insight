@@ -264,7 +264,7 @@ func (server *Server) syncCached() {
 				syncDuration = time.Minute
 			}
 
-			if syncDuration > server.syncDuration {
+			if syncDuration < server.syncDuration {
 				syncDuration = server.syncDuration
 			}
 
