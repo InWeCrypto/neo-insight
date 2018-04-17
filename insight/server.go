@@ -261,7 +261,7 @@ func (server *Server) syncCached() {
 			syncDuration := server.syncDuration
 
 			if claimTimes > 20*time.Second {
-				syncDuration = time.Minute
+				syncDuration = time.Minute * 10
 			}
 
 			if syncDuration < server.syncDuration {
