@@ -400,7 +400,10 @@ func (server *Server) getClaim(params []interface{}) (interface{}, *JSONRPCError
 	unclaimed, ok := server.getCachedClaim(address)
 
 	if !ok {
-		unclaimed = &rpc.Unclaimed{}
+		unclaimed = &rpc.Unclaimed{
+			Unavailable: "0",
+			Available:   "0",
+		}
 	}
 
 	return unclaimed, nil
